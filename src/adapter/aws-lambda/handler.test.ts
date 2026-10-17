@@ -276,6 +276,51 @@ describe('EventProcessor.createRequest', () => {
     expect(request.url).toBe('https://example.test/my/path?empty=&present=0')
   })
 
+  it('Should encode ALB query parameters with special characters', () => {
+    const event: LambdaEvent = {
+      httpMethod: 'GET',
+      path: '/my/path',
+      headers: { host: 'example.test' },
+      body: null,
+      isBase64Encoded: false,
+      queryStringParameters: {
+        q: 'a&b',
+        'key with spaces': 'value=1',
+      },
+      requestContext: {
+        elb: { targetGroupArn: 'arn:aws:elasticloadbalancing:...' },
+      },
+    }
+
+    const request = getProcessor(event).createRequest(event)
+    const url = new URL(request.url)
+
+    expect(url.searchParams.get('q')).toBe('a&b')
+    expect(url.searchParams.get('key with spaces')).toBe('value=1')
+  })
+
+  it('Should encode ALB multiValue query parameters with special characters', () => {
+    const event: LambdaEvent = {
+      httpMethod: 'GET',
+      path: '/my/path',
+      headers: { host: 'example.test' },
+      body: null,
+      isBase64Encoded: false,
+      queryStringParameters: null,
+      multiValueQueryStringParameters: {
+        q: ['a&b', 'c=d'],
+      },
+      requestContext: {
+        elb: { targetGroupArn: 'arn:aws:elasticloadbalancing:...' },
+      },
+    }
+
+    const request = getProcessor(event).createRequest(event)
+    const url = new URL(request.url)
+
+    expect(url.searchParams.getAll('q')).toEqual(['a&b', 'c=d'])
+  })
+
   it('Should return valid Request object from version 1.0 API Gateway event', () => {
     const event: LambdaEvent = {
       ...baseV1Event,

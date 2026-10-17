@@ -582,15 +582,18 @@ export class ALBProcessor extends EventProcessor<ALBProxyEvent> {
       The expected results is for select to be an array with two items. However the pre-fix code is only returning one item ('currency') in the array.
       A simple fix would be to invert the if statement and check the multiValueQueryStringParameters first.
     */
+    // ALB passes decoded values, so we need to re-encode them to preserve the original URL
     if (event.multiValueQueryStringParameters) {
       return Object.entries(event.multiValueQueryStringParameters || {})
         .filter(([, value]) => value)
-        .map(([key, value]) => `${key}=${value.join(`&${key}=`)}`)
+        .map(([key, values]) =>
+          values.map((value) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&')
+        )
         .join('&')
     } else {
       return Object.entries(event.queryStringParameters || {})
         .filter(([, value]) => value !== undefined)
-        .map(([key, value]) => `${key}=${value}`)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value || '')}`)
         .join('&')
     }
   }
