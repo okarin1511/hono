@@ -80,6 +80,38 @@ describe('url', () => {
       expect(res).toEqual([':id{[0-9]+}#next', 'id', /^[0-9]+(?=\/next)/])
     })
 
+    it('regex alternation pattern', () => {
+      const res = getPattern(':lang{en|fr}')
+      expect(res).toEqual([':lang{en|fr}', 'lang', /^(?:en|fr)$/])
+    })
+
+    it('regex alternation pattern with next', () => {
+      const res = getPattern(':lang{en|fr}', 'page')
+      expect(res).toEqual([':lang{en|fr}#page', 'lang', /^(?:en|fr)(?=\/page)/])
+    })
+
+    it('regex alternation anchors all alternatives', () => {
+      const [, , regex] = getPattern(':lang{en|fr}') as [string, string, RegExp]
+      expect(regex.test('en')).toBe(true)
+      expect(regex.test('fr')).toBe(true)
+      expect(regex.test('english')).toBe(false)
+      expect(regex.test('xfr')).toBe(false)
+    })
+
+    it('regex alternation with next anchors all alternatives', () => {
+      const [, , regex] = getPattern(':lang{en|fr}', 'page') as [string, string, RegExp]
+      expect(regex.test('en/page')).toBe(true)
+      expect(regex.test('fr/page')).toBe(true)
+      expect(regex.test('english/page')).toBe(false)
+      expect(regex.test('xfr/page')).toBe(false)
+    })
+
+    it('regex without alternation is not wrapped', () => {
+      const res = getPattern(':id{[0-9]+}')
+      const [, , regex] = res as [string, string, RegExp]
+      expect(regex.source).toBe('^[0-9]+$')
+    })
+
     it('wildcard', () => {
       const res = getPattern('*')
       expect(res).toBe('*')

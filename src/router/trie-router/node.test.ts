@@ -615,6 +615,36 @@ describe('Duplicate param name', () => {
       expect(res[0][1]).toEqual({ id: '123', action: 'delete' })
     })
   })
+
+  describe('regex alternation anchoring', () => {
+    const node = new Node()
+    node.insert('get', '/:lang{en|fr}', 'lang')
+    node.insert('get', '/x/:id', 'id')
+
+    it('get /en - should match', () => {
+      const [res] = node.search('get', '/en')
+      expect(res.length).toBe(1)
+      expect(res[0][0]).toBe('lang')
+      expect(res[0][1]).toEqual({ lang: 'en' })
+    })
+
+    it('get /fr - should match', () => {
+      const [res] = node.search('get', '/fr')
+      expect(res.length).toBe(1)
+      expect(res[0][0]).toBe('lang')
+      expect(res[0][1]).toEqual({ lang: 'fr' })
+    })
+
+    it('get /english - should not match', () => {
+      const [res] = node.search('get', '/english')
+      expect(res.length).toBe(0)
+    })
+
+    it('get /xfr - should not match /:lang{en|fr}', () => {
+      const [res] = node.search('get', '/xfr')
+      expect(res.length).toBe(0)
+    })
+  })
 })
 
 describe('Sort Order', () => {
