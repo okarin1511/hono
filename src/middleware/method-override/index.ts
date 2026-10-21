@@ -95,8 +95,12 @@ export const methodOverride = (options: MethodOverrideOptions): MiddlewareHandle
         if (method) {
           delete params[methodFormName]
           const newParams = new URLSearchParams(params)
-          const request = new Request(newRequest, {
+          const newHeaders = new Headers(clonedRequest.headers)
+          newHeaders.delete('content-type')
+          newHeaders.delete('content-length')
+          const request = new Request(c.req.url, {
             body: newParams,
+            headers: newHeaders,
             method: method as string,
           })
           return app.fetch(request, c.env, getExecutionCtx(c))
